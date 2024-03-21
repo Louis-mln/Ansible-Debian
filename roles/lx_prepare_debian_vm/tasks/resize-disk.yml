@@ -1,0 +1,22 @@
+---
+    - name: growpart /dev/sda2
+      command: growpart /dev/sda 2
+      ignore_errors: yes
+
+    - name: pvresize /dev/sda2
+      command: pvresize /dev/sda2
+      ignore_errors: yes
+
+    - name: lvextend centos/root -l +100%FREE
+      command: lvextend centos/root -l +100%FREE
+      ignore_errors: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: lvextend almalinux/root -l +100%FREE
+      command: lvextend almalinux/root -l +100%FREE
+      ignore_errors: yes
+      when: ansible_os_family == "AlmaLinux"
+
+    - name: xfs_growfs /
+      command: xfs_growfs /
+      ignore_errors: yes

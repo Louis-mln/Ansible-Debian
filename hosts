@@ -1,0 +1,4 @@
+# ansible_ssh_host=IP ansible_ssh_user=root ansible_ssh_pass=PASSWORD
+
+# exemple : 
+# lmu-d12 ansible_ssh_user=root ansible_ssh_pass=azerty

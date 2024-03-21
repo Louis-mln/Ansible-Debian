@@ -1,0 +1,282 @@
+---
+    - name: Vérification Debian
+      fail: msg="Ce playbook n'est compatible qu'avec Debian ({{ansible_os_family}})"
+      when: ansible_distribution != "Debian"
+    - name: Vérification version Debian
+      fail: msg="Ce playbook n'est compatible qu'avec Debian 12 ({{ansible_distribution_version}})"
+      when: ansible_distribution_version != "12"
+
+    - name: Configuration du nom d'hôte
+      hostname:
+        name: "{{inventory_hostname}}"
+      when: change_hostname == true
+      ignore_errors: yes
+
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Regénération du machine-id
+  # =-=-=-=-=-=-=-=-=-=-=-=
+
+    - name: Suppression de /etc/machine-id
+      file:
+        path: /etc/machine-id
+        state: absent
+      when: change_machine_id == true
+    - name: Suppression de /var/lib/dbus/machine-id
+      file:
+        path: /var/lib/dbus/machine-id
+        state: absent
+      when: change_machine_id == true
+    - name: Génération d'un nouveau machine-id
+      command: systemd-machine-id-setup
+      when: change_machine_id == true
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Configuration du Pare-feu
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: "[Pare-feu] Autorisation du serveur Bacula"
+      ufw:
+        rule: allow
+        to_port: 9102
+        proto: tcp
+        src: 10.11.2.2
+      when: backup == true
+      ignore_errors: yes
+    - name: "[Pare-feu] Autorisation du serveur Bacula"
+      ufw:
+        rule: allow
+        to_port: 9102
+        proto: tcp
+        src: 10.10.2.1
+      when: backup == true
+      ignore_errors: yes
+
+    - name: "[Pare-feu] Autorisation du port SSH (Si changé)"
+      ufw:
+        rule: allow
+        port: "{{ssh_config.port}}"
+        proto: tcp
+      when: ssh_config.port != 22
+      ignore_errors: yes
+
+    - name: "[Pare-feu] Désactivation du port SSH 22 (Si changé)"
+      ufw:
+        rule: deny
+        port: 22
+        proto: tcp
+      when: ssh_config.port != 22
+      ignore_errors: yes
+
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Ajout des clés SSH
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: "[Ajout de la clé SSH] Serge"
+      authorized_key:
+        user: root
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDL/U6D6WJXfr60fX33heHrb5N2OxUYsCL9z3WIPFrO5AYM1DtD+/Fa1LrcXMQFspHAh0gd5ij/c+MWVLYZKvlG3YskHYC0hU/r82yHI7Ufbz8hUgvM52K/UhkrcVU7waN5uzR3ZdkAf4W83b8LVH8Htaxgz3WWOMqK8f0Ew2b/kPP1HRT4u8pypVos+0FhEo3Dyzf3QsXOjFKKZ14pEiWDlpyOdU9Bicq0Fl5QZgc5HNOb7Iu/h1JicbcG68s3kEO5PWFxJ3NgyjlHkoiOmD9DwtgGoJ5yYhXc3oDv7KQceGLdk5i47LH1bPS/JCXviI7QBOyN8V4bK+LNJNwNjF93 serge.dewailly@linexos.fr"
+    - name: "[Ajout de la clé SSH] Thomas"
+      authorized_key:
+        user: root
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/rxJCt+YCcrES5uFLAKqUc6+rLTkTqDG6jG5kIJo0sA4cAFUROZJA/O4AtHZwCvX0W5lD3u9w4cuIPBNwKCkxQ7dJv9KmzQeZ0A3yuAWThm9dE/7yubd8hyRU1iwb/myW4uJWTJOZkYURHM126WFcCYkrDpn9ZOHEDvKKx6/bbAtUAV7CNqjaIPufiM5R61ccKXJEXAEKVhiGjDd4WtQWZyBNQrBhLUtNOmpkZqPSM2V4FaJBySRepM+hrRfnlIfMXLo47HvXRvAdH83ypyVzoB0Y6jucmUIpyCqlZIT5NeFDKUlos2er4kqyTfl73S5AI0SlgiGyy1NW5qF/qskbm6py8VRklIG0vYaokU84Pp9FRIHCpGhe39KpTnKG8LY3Zidht+m9Yk4APPEk1qxsg5KX92hSgNfM1HcOMp0tnsQ83GJGzvFiDf4m+xKXP/f9uMkZ6Y1YA4llkVFg2elIvz04/u/0NvPSfZXw29SVoWaIvfah8KUmkr1w47NNRVs= thomas.charpentier@thomas"
+    - name: "[Ajout de la clé SSH] Louis"
+      authorized_key:
+        user: root
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCn90NfU8HCRcWiB4chbao5KCrRVbnRrId7qou+BBBUq0DwJLm2kGiiMm20znJYSxZlwTDBZSTplRuB0LG3qgy5puBDlwO4pyLGlut/4SsD40HID0qtnuImPfbtaWTYtW/9TQJ0TDHMsxMvkedXaNLceT0ZHE6hFA9o5o4NYjAfVECu9A85xE00y+RbPKUV5DZwYmjE9Q9N/tWFavPIUzy/3PsNSAmeSmH4FkvHbUT0WOY5W0SELWsy5veqx4JsolOpVGR5w5/ZZA1Z4UUVr5hYgAFga7AuO0R027tSoU4ieBjGBy7Ij5LcSfJlRqJ6YcHuMvrdmPtslXh8hBSlY1hX louis.mulin@louis"
+    - name: "[Ajout de la clé SSH] baptiste"
+      authorized_key:
+        user: root
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDHfhRfia1Ac8XzIsC+chxH8XoB/tU3N1hYcvXNNFJWuhs1SdJXwAeIv+lkidNq4iJqA0/a8oqy5yB2bLJLh2V6DyUqGS9f76ooJQhdx3zs/KWJqRnrbSwM7pFfWoymfDicM1xFNhwcUK8iyNnHLTPXJjaEiTiRB9fDu8T06TPVjAyHy2tzeDG57PgoQT3fKSo3903xXkep1gsQ2R6+u33YDzbi/UvsG44yNzrgBx8Fp5G7+Blt8B9mqVPbDRDxp2ojVu5K4MwsGUMTJVrTw8PANng6SDEKjxS5M8lQZOvRtATUf5t4uZ9es+RU6y0dX2/BWjdHfvILne7G/KdHNb3Yh/t+mLXB43Q8UoncXicUEL0pV1UlIHiiXIY6BLnpHimsSbqwJHK5AgD1J3ZoKr7lrF5LfUT/s8ono4L9OH2rkGoQIEPOuNaSorGUMMLjaiub539WfxRuxBYrpf+zgT3tRYnpx2n1042z6RBDWSu2v101ZV35JbyEl8lfeJNsiNc= baptiste@baptiste-UX310UA"
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Installation des différents paquets
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: "Mise à jour de la liste des paquets"
+      apt:
+        update_cache: yes
+    - name: "Installation des différents outils"
+      apt:
+        name: ['nano', 'iotop', 'policycoreutils', 'git', 'sysstat', 'tcpdump', 'net-tools', 'telnet', 'wget', 'vim', 'gzip', 'dnsutils', 'htop', 'iftop', 'tar', 'screen', 'sshpass', 'unzip', 'cloud-guest-utils', 'chrony', 'rsync']
+        state: present
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Configuration du serveur SSH
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: Configuration du serveur SSH
+      template:
+        src: ../files/ssh-config.j2
+        dest: /etc/ssh/sshd_config
+
+    - name: Redémarrage du serveur SSH
+      service:
+          name: ssh
+          state: restarted
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Ajout de règles sysctl
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: Ensure TCP SYN Cookies is enabled (Prevent Denial Of Service)
+      sysctl:
+        name: net.ipv4.tcp_syncookies
+        value: 1
+        state: present
+    - name: Ensure Reverse Path Filtering is enabled (Prevent Denial Of Service)
+      sysctl:
+        name: net.ipv4.conf.all.rp_filter
+        value: 1
+        state: present
+    - name: Ensure Reverse Path Filtering is enabled (Prevent Denial Of Service)
+      sysctl:
+        name: net.ipv4.conf.default.rp_filter
+        value: 1
+        state: present
+    - name: Ensure bogus ICMP responses are ignored (Prevent Denial Of Service)
+      sysctl:
+        name: net.ipv4.icmp_ignore_bogus_error_responses
+        value: 1
+        state: present
+    - name: Ensure broadcast ICMP requests are ignored (Prevent Smurf attack)
+      sysctl:
+        name: net.ipv4.icmp_echo_ignore_broadcasts
+        value: 1
+        state: present
+    - name: Ensure suspicious packets are logged
+      sysctl:
+        name: net.ipv4.conf.all.log_martians
+        value: 1
+        state: present
+    - name: Ensure suspicious packets are logged
+      sysctl:
+        name: net.ipv4.conf.default.log_martians
+        value: 1
+        state: present
+    - name: Ensure secure ICMP redirects are not accepted
+      sysctl:
+        name: net.ipv4.conf.all.secure_redirects
+        value: 0
+        state: present
+    - name: Ensure secure ICMP redirects are not accepted
+      sysctl:
+        name: net.ipv4.conf.default.secure_redirects
+        value: 0
+        state: present
+    - name: Ensure ICMP redirects are not accepted
+      sysctl:
+        name: net.ipv4.conf.all.accept_redirects
+        value: 0
+        state: present
+    - name: Ensure ICMP redirects are not accepted
+      sysctl:
+        name: net.ipv4.conf.default.accept_redirects
+        value: 0
+        state: present
+    - name: Ensure source routed packets are not accepted
+      sysctl:
+        name: net.ipv4.conf.all.accept_source_route
+        value: 0
+        state: present
+    - name: Ensure source routed packets are not accepted
+      sysctl:
+        name: net.ipv4.conf.default.accept_source_route
+        value: 0
+        state: present
+    - name: Ensure packet redirect sending is disabled
+      sysctl:
+        name: net.ipv4.conf.all.send_redirects
+        value: 0
+        state: present
+    - name: Ensure packet redirect sending is disabled
+      sysctl:
+        name: net.ipv4.conf.default.send_redirects
+        value: 0
+        state: present
+    - name: Ensure IP forwarding is disabled
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 0
+        state: present
+      when: allow_forwarding == false
+    - name: Ensure IP forwarding is enabled
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+      when: allow_forwarding == true
+    - name: Ensure address space layout randomization (ASLR) is enabled
+      sysctl:
+        name: kernel.randomize_va_space
+        value: 2
+        state: present
+    - name: Ensure core dumps are restricted
+      sysctl:
+        name: fs.suid_dumpable
+        value: 0
+        state: present
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Configuration des limits Linux
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: Configuration des limits Linux
+      template:
+        src: ../files/limits.conf.j2
+        dest: /etc/security/limits.conf
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Configuration de Chrony (NTP)
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: Configuration de Chrony
+      template:
+        src: ../files/chrony/chrony.conf.j2
+        dest: /etc/chrony.conf
+
+#    - name: Configuration de Chrony
+#      template:
+#        src: ../files/chronyd.j2
+#        dest: /etc/sysconfig/chronyd
+    
+    - name: Démarrage du service Chronyd
+      service:
+          name: chronyd
+          enabled: true
+          state: restarted
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Création des utilisateurs
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - name: Création des utilisateurs
+      user:
+        name: "{{item.name}}"
+        groups: "{{item.groups}}"
+      with_items: "{{users}}"
+      ignore_errors: yes
+
+    - name: "[Ajout de la clé SSH] Sur les nouveaux utilisateurs"
+      authorized_key:
+        user: "{{item.name}}"
+        state: present
+        key: "{{item.sshkey}}"
+      when: item.sshkey is defined
+      with_items: "{{users}}"
+      ignore_errors: yes
+
+  # =-=-=-=-=-=-=-=-=-=-=-=
+  # Zone d'import
+  # =-=-=-=-=-=-=-=-=-=-=-=
+    - import_tasks: resize-disk.yml
+      when: resize_disk == true
+
+    - import_tasks: shinken.yml
+      when: shinken == true
+
+    - import_tasks: bacula.yml
+      when: backup == true
+
+    - import_tasks: nginx.yml
+      when: nginx.install == true
+
+    - import_tasks: php.yml
+      when: php.install == true

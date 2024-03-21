@@ -1,0 +1,30 @@
+---
+# defaults file for lx_preapre_vm
+change_hostname: true
+backup: false
+shinken: false
+resize_disk: false
+allow_forwarding: false
+add_tools: []
+ssh_config:
+  port: 22
+  root: enable
+  listen: 
+    - "0.0.0.0"
+users:
+  # - { name: creatic, groups: "nignx" } #, sshkey: ""}
+nginx:
+  install: false
+  dir_user: webuser
+  sites:
+    # - { hostsite: "exemple.fr", folder: "exemple" }
+php:
+  install: false
+  version: 7.4
+  nginx: true
+  fpm:
+    user: apache
+    group: apache
+    listen:
+      user: apache
+      group: apache

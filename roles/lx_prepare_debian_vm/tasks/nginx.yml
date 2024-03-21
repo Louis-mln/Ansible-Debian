@@ -1,0 +1,77 @@
+# Compatibilité IMPORT : Debian
+---
+    - name: "Installation d'NGINX"
+      apt: 
+        name: nginx
+        state: present
+        update_cache: yes  # Ajoutez cette ligne pour mettre à jour le cache des paquets
+
+    - name: "Configuration d'NGINX"
+      template:
+        src: ../j2/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+
+    - name: "Configuration de PHP sur NGINX"
+      template:
+        src: ../j2/nginx-php.j2
+        dest: /etc/nginx/snippets/fastcgi-php.conf  # Chemin modifié pour s'adapter à la structure Debian
+
+    - name: "Ajout du groupe NGINX à l'utilisateur"
+      user:
+        name: "nginx"
+        groups: "{{nginx.dir_user}}"
+        append: yes
+
+    - name: Modification de répertoire utilisateur
+      file:
+        path: "/home/{{nginx.dir_user}}"
+        state: directory
+        owner: "{{nginx.dir_user}}"
+        group: nginx
+        mode: 0710
+
+    - name: Création du répertoire nginx pour les sites
+      file:
+        path: "/home/{{nginx.dir_user}}/www/"
+        state: directory
+        owner: "{{nginx.dir_user}}"
+        group: nginx
+        mode: 0770
+
+    - name: Création du répertoire nginx pour les sites
+      file:
+        path: "/home/{{nginx.dir_user}}/www/{{item.folder}}"
+        state: directory
+        owner: "{{nginx.dir_user}}"
+        group: nginx
+        mode: 0770
+      loop: "{{nginx.sites}}"  # 'with_items' est remplacé par 'loop' pour plus de modernité
+
+    - name: "Configuration des webhost"
+      template:
+        src: ../j2/nginx-webhost.j2
+        dest: /etc/nginx/sites-available/{{item.hostsite}}.conf  # Chemin adapté à Debian
+      vars:
+        hostsite: "{{item.hostsite}}"
+        dir: "/home/{{nginx.dir_user}}/www/{{item.folder}}"
+      loop: "{{nginx.sites}}"  # 'with_items' est remplacé par 'loop' pour plus de modernité
+
+    - name: "Activation des webhost"
+      file:
+        src: "/etc/nginx/sites-available/{{item.hostsite}}.conf"
+        dest: "/etc/nginx/sites-enabled/{{item.hostsite}}.conf"
+        state: link
+      loop: "{{nginx.sites}}"  # Assure que les sites sont activés (Debian spécifique)
+
+#    - name: "Configuration du selinux"  # Cette étape peut être omise pour Debian si SELinux n'est pas utilisé
+#      ansible.builtin.ignore_errors: yes
+#      community.general.selinux_permissive:
+#        name: httpd_t
+#        permissive: true
+
+    - name: "Redémarrage d'NGINX"
+      service:
+          name: nginx
+          enabled: true
+          state: restarted
+

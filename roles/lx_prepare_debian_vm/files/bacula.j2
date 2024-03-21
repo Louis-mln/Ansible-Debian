@@ -1,0 +1,18 @@
+Director {
+  Name = linexos-backup01-dir
+  Password = "X3VpyDqj0kpH2ILU/2/fjwu2Z6bckXYU4xrEsMnNfyWg"
+}
+
+FileDaemon {
+  Name = {{ inventory_hostname }}
+  FDAddress = 0.0.0.0
+  FDport = 9102
+  WorkingDirectory = /opt/bacula/working
+  Pid Directory = /var/run
+  Maximum Concurrent Jobs = 20
+}
+
+Messages {
+  Name = Standard
+  director = bacula-dir = all, !skipped, !restored
+}

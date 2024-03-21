@@ -1,0 +1,11 @@
+---
+    - name: Create Shinken User
+      user:
+        name: shinken
+        comment: Supervision
+      
+    - name: Adding of poller SSH key to Shinken user
+      authorized_key:
+        user: shinken
+        state: present
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkmOMgzyZAE14QDRL807jG1gVbDccRlBn21cKqlEWFRftnDcTnaUdsfnu7O3di6BuKT7zh/NWBOZv8KdPj4FlxPb3LDKEFQelX9U0qgPm52KlfxlfbqT3ovdsp+GKz+fBdx3J97IMgKWi+apgiruKAM0Q0GiuVPHKmKPHofSsSD/ARkkhCLq1HmQTnvP0D/kxXkMMszeZ7Oq03Wbf1h79ckeybHLbzWxU4BupSmyFQVDglCrN45AXfpnKEgF3ImTbpOLklL3MwUNMaibTvjY8LDgBvVyvz3vvUI6FAA8ajhNyn035S8eBsbOiW1yMF2VtULOkRLmne1/Jy8D9WDkkv shinken@localhost.localdomain"

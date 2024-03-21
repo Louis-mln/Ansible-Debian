@@ -1,0 +1,66 @@
+# Compatibilité IMPORT : Debian
+---
+    - name: Mise à jour des paquets
+      apt:
+        update_cache: yes
+
+    - name: "Variable PHP pour l'installation"
+      set_fact:
+        packages_php: 
+          - php
+          - php-fpm
+          - php-dev
+          - php-common
+          - php-gd
+          - php-mbstring
+          - php-mysql
+          - php-pgsql
+          - php-process
+          - php-pdo
+          - php-pear
+          - php-xml
+          - php-intl
+          - php-bcmath
+          - php-gmp
+          - php-imagick
+          - php-redis
+
+    - name: Déinstallation de la version de PHP déjà présente 
+      apt: 
+        name: "{{ packages_php }}"
+        state: absent
+      when: >
+        (php.version == '8.0') or 
+        (php.version == '7.4') or 
+        (php.version == '7.3') or 
+        (php.version == '7.2') or 
+        (php.version == '7.1') or 
+        (php.version == '7.0') or 
+        (php.version == '5.6') or 
+        (php.version == '5.5')
+
+    - name: Installation de PHP
+      apt: 
+        name: "{{ packages_php }}"
+        state: present
+      when: >
+        (php.version == '8.0') or 
+        (php.version == '7.4') or 
+        (php.version == '7.3') or 
+        (php.version == '7.2') or 
+        (php.version == '7.1') or 
+        (php.version == '7.0') or 
+        (php.version == '5.6') or 
+        (php.version == '5.5')
+
+    - name: Configuration de la pool php-fpm
+      template:
+        src: ../j2/www.conf.j2
+        dest: /etc/php/{{ php.version }}/fpm/pool.d/www.conf  # Modifiez le chemin si nécessaire
+
+    - name: Redémarrage de PHP FPM
+      service:
+          name: php{{ php.version | replace('.', '') }}-fpm  # Modifiez le nom du service si nécessaire
+          enabled: true
+          state: restarted
+

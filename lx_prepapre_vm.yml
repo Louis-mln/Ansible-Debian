@@ -1,0 +1,31 @@
+---
+- hosts: linexos-registry01
+  strategy: linear
+
+  vars:
+    ipaclient_servers: linexos-freeipa.linexos.local,linexos-freeipa-replica01.linexos.local,linexos-freeipa-replica02.linexos.local
+    ipaclient_domain: linexos.local
+    ipaadmin_principal: "dmin"
+    ipaadmin_password: "exemple"
+    ipaclient_mkhomedir: yes
+    
+    change_machine_id: true # Default value : true
+    change_hostname: true # Default value : true
+    backup: false # Default value : false
+    shinken: false # Default value : false
+    resize_disk: false # Default value : false
+    php: false # Default value : false
+    backup: false # Default value : false
+    allow_forwarding: false # Default value : false
+    ssh_config: 
+      port: 22  # Default value : 22
+      root: enable  # Default value : enable
+      listen: # Default value : - "0.0.0.0"
+        - "0.0.0.0"
+    
+    poller_ip: "10.11.0.0/16"
+
+  roles:
+    - lx_prepare_vm
+    - lx_install_nrpe
+
