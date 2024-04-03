@@ -26,6 +26,6 @@
     poller_ip: "10.11.0.0/16"
 
   roles:
-    - lx_prepare_vm
+    - lx_prepare_debian_vm
     - lx_install_nrpe
 
