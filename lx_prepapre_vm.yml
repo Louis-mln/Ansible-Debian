@@ -1,5 +1,5 @@
 ---
-- hosts: linexos-registry01
+- hosts: "{{ target_hosts }}"
   strategy: linear
 
   vars:
